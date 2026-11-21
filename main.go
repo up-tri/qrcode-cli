@@ -28,11 +28,13 @@ func run(stdin io.Reader, stdout io.Writer, args []string) error {
 	install := fs.Bool("install", false, "このコマンドを qrcode という名前で -install-dir にコピーし、PATH から使えるようにする")
 	installDir := fs.String("install-dir", "", "-install のコピー先 (デフォルト: ~/.local/bin)")
 	fs.Usage = func() {
-		fmt.Fprintln(fs.Output(), "Usage: echo 'text' | qrcode [options]")
+		fmt.Fprintln(fs.Output(), "Usage: qrcode [options] TEXT...")
+		fmt.Fprintln(fs.Output(), "       echo 'text' | qrcode [options]")
 		fmt.Fprintln(fs.Output(), "       qrcode -install [-install-dir DIR]")
 		fs.PrintDefaults()
 	}
-	if err := fs.Parse(args); err != nil {
+	positional, err := parseInterspersed(fs, args)
+	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return nil
 		}
@@ -48,11 +50,20 @@ func run(stdin io.Reader, stdout io.Writer, args []string) error {
 		return err
 	}
 
-	data, err := io.ReadAll(stdin)
-	if err != nil {
-		return fmt.Errorf("標準入力の読み込みに失敗: %w", err)
+	var text string
+	if len(positional) > 0 {
+		text = strings.Join(positional, " ")
+	} else {
+		if isTerminal(stdin) {
+			fs.Usage()
+			return errors.New("テキストを引数か標準入力で渡してください")
+		}
+		data, err := io.ReadAll(stdin)
+		if err != nil {
+			return fmt.Errorf("標準入力の読み込みに失敗: %w", err)
+		}
+		text = string(data)
 	}
-	text := string(data)
 	if !*keepNewline {
 		text = strings.TrimRight(text, "\r\n")
 	}

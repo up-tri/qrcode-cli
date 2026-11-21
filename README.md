@@ -1,9 +1,9 @@
 # qrcode-cli
 
-標準入力から受け取ったテキストを QR コードに変換し、ターミナルに表示する CLI です。
+引数または標準入力で受け取ったテキストを QR コードに変換し、ターミナルやブラウザに表示する CLI です。
 
 ```
-$ echo "https://example.com" | qrcode
+$ qrcode https://example.com
 █████████████████████████████████
 █████████████████████████████████
 ████ ▄▄▄▄▄ ███▀▄▄ ▀▀ █ ▄▄▄▄▄ ████
@@ -39,6 +39,9 @@ go build -o qrcode .
 
 ```sh
 # 文字列を QR コードにする
+qrcode https://example.com
+
+# 標準入力から渡す
 echo "https://example.com" | qrcode
 
 # ファイルの内容を QR コードにする
@@ -48,13 +51,16 @@ qrcode < note.txt
 pbpaste | qrcode
 
 # 誤り訂正レベルを最高にする
-echo "hello" | qrcode -level H
+qrcode -level H hello
 
 # 明るい背景のターミナルで表示する
-echo "hello" | qrcode -invert
+qrcode -invert hello
 
-# ブラウザで表示する
-echo "https://example.com" | qrcode -browser
+# ブラウザで表示する (オプションはテキストの後ろにも書ける)
+qrcode https://example.com -browser
+
+# "-" で始まるテキストは -- の後ろに書く
+qrcode -- -hello
 ```
 
 ## オプション
@@ -70,6 +76,8 @@ echo "https://example.com" | qrcode -browser
 
 ## 仕様
 
+- テキストは引数か標準入力で渡します。引数が複数あるときは半角スペースでつなげます。引数と標準入力の両方があるときは引数を使います。
+- 引数がなく、標準入力も端末のまま (パイプやリダイレクトがない) のときは、入力待ちにならずにヘルプを表示して終了します。
 - 上下 2 マスを半角ブロック文字 (`▀` `▄` `█`) 1 文字にまとめて描くため、縦横の比率を保ったままコンパクトに表示されます。
 - 読み取りに必要な余白 (クワイエットゾーン) を周囲に含めて出力します。
 - `-browser` を付けると、QR コード画像と元のテキストを埋め込んだ HTML を一時ディレクトリに書き出し、既定のブラウザで開きます (macOS は `open`、Linux は `xdg-open`、Windows は `rundll32`)。ブラウザが読み込む前に消えないよう、HTML ファイルは削除せずに残します。

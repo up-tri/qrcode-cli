@@ -61,3 +61,37 @@ func TestInstall(t *testing.T) {
 		t.Errorf("不要な PATH の案内が出ている: %s", out.String())
 	}
 }
+
+func TestTextFromArgs(t *testing.T) {
+	render := func(stdin string, args ...string) string {
+		t.Helper()
+		var out bytes.Buffer
+		if err := run(strings.NewReader(stdin), &out, args); err != nil {
+			t.Fatalf("run(%q): %v", args, err)
+		}
+		return out.String()
+	}
+
+	want := render("hello world\n")
+	cases := [][]string{
+		{"hello world"},
+		{"hello", "world"},
+		{"-level", "M", "hello", "world"},
+		{"hello", "-level", "M", "world"},
+	}
+	for _, args := range cases {
+		if got := render("", args...); got != want {
+			t.Errorf("run(%q) の出力が標準入力で渡した場合と異なる", args)
+		}
+	}
+
+	// 引数があれば標準入力より優先する
+	if got := render("ignored", "hello world"); got != want {
+		t.Errorf("引数が標準入力より優先されていない")
+	}
+
+	// "--" 以降はオプションではなくテキストとして扱う
+	if got, want := render("", "--", "-invert"), render("-invert"); got != want {
+		t.Errorf(`"--" 以降がテキストとして扱われていない`)
+	}
+}
