@@ -1,4 +1,4 @@
-// qrcode-cli: 標準入力から受け取ったテキストをQRコード化してターミナルに表示する。
+// qrcode-cli: 標準入力から受け取ったテキストをQRコード化して表示する。
 package main
 
 import (
@@ -24,12 +24,23 @@ func run(stdin io.Reader, stdout io.Writer, args []string) error {
 	level := fs.String("level", "M", "誤り訂正レベル (L, M, Q, H)")
 	invert := fs.Bool("invert", false, "白黒を反転する (明るい背景のターミナル向け)")
 	keepNewline := fs.Bool("keep-newline", false, "末尾の改行を削除しない")
+	browser := fs.Bool("browser", false, "ターミナルではなくブラウザで表示する")
+	install := fs.Bool("install", false, "このコマンドを qrcode という名前で -install-dir にコピーし、PATH から使えるようにする")
+	installDir := fs.String("install-dir", "", "-install のコピー先 (デフォルト: ~/.local/bin)")
 	fs.Usage = func() {
 		fmt.Fprintln(fs.Output(), "Usage: echo 'text' | qrcode [options]")
+		fmt.Fprintln(fs.Output(), "       qrcode -install [-install-dir DIR]")
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		return err
+	}
+
+	if *install {
+		return installSelf(*installDir, stdout)
 	}
 
 	recovery, err := parseLevel(*level)
@@ -52,6 +63,10 @@ func run(stdin io.Reader, stdout io.Writer, args []string) error {
 	qr, err := qrcode.New(text, recovery)
 	if err != nil {
 		return fmt.Errorf("QRコードの生成に失敗: %w", err)
+	}
+
+	if *browser {
+		return showInBrowser(qr, text, stdout)
 	}
 
 	_, err = io.WriteString(stdout, render(qr.Bitmap(), *invert))
