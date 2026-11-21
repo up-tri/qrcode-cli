@@ -27,10 +27,12 @@ func run(stdin io.Reader, stdout io.Writer, args []string) error {
 	browser := fs.Bool("browser", false, "ターミナルではなくブラウザで表示する")
 	install := fs.Bool("install", false, "このコマンドを qrcode という名前で -install-dir にコピーし、PATH から使えるようにする")
 	installDir := fs.String("install-dir", "", "-install のコピー先 (デフォルト: ~/.local/bin)")
+	completion := fs.String("completion", "", "シェル補完スクリプトを出力する (zsh)")
 	fs.Usage = func() {
 		fmt.Fprintln(fs.Output(), "Usage: qrcode [options] TEXT...")
 		fmt.Fprintln(fs.Output(), "       echo 'text' | qrcode [options]")
 		fmt.Fprintln(fs.Output(), "       qrcode -install [-install-dir DIR]")
+		fmt.Fprintln(fs.Output(), "       qrcode -completion zsh")
 		fs.PrintDefaults()
 	}
 	positional, err := parseInterspersed(fs, args)
@@ -41,6 +43,9 @@ func run(stdin io.Reader, stdout io.Writer, args []string) error {
 		return err
 	}
 
+	if *completion != "" {
+		return writeCompletion(*completion, stdout)
+	}
 	if *install {
 		return installSelf(*installDir, stdout)
 	}

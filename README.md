@@ -35,6 +35,29 @@ go build -o qrcode .
 ./qrcode -install -install-dir /usr/local/bin
 ```
 
+### zsh 補完
+
+`qrcode -completion zsh` で補完スクリプトを出力します。次のどちらかの方法で読み込んでください。
+
+**方法 1: `.zshrc` で読み込む** (手軽)
+
+`~/.zshrc` の `compinit` より後ろに次の行を追加します。
+
+```sh
+eval "$(qrcode -completion zsh)"
+```
+
+**方法 2: fpath にファイルを置く** (シェルの起動が速い)
+
+```sh
+mkdir -p ~/.zfunc
+qrcode -completion zsh > ~/.zfunc/_qrcode
+```
+
+`~/.zshrc` の `compinit` より前に `fpath=(~/.zfunc $fpath)` を追加し、シェルを開き直してください。この方法では、qrcode を更新したときに同じコマンドでファイルを作り直す必要があります。
+
+オプション名、`-level` の値 (`L` `M` `Q` `H`)、`-install-dir` のディレクトリが補完されます。`go install` で入れた `qrcode-cli` コマンドも補完の対象です。
+
 ## 使い方
 
 ```sh
@@ -72,6 +95,7 @@ qrcode -- -hello
 | `-browser` | `false` | ターミナルではなくブラウザで表示します |
 | `-install` | `false` | このコマンドを `qrcode` という名前で `-install-dir` にコピーし、PATH から使えるようにします。標準入力は読みません |
 | `-install-dir` | `~/.local/bin` | `-install` のコピー先 |
+| `-completion` | | シェル補完スクリプトを出力します。対応シェルは `zsh` のみです |
 | `-keep-newline` | `false` | 入力末尾の改行を残します。デフォルトでは `echo` などで付く改行を取り除きます |
 
 ## 仕様

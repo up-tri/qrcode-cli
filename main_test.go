@@ -95,3 +95,16 @@ func TestTextFromArgs(t *testing.T) {
 		t.Errorf(`"--" 以降がテキストとして扱われていない`)
 	}
 }
+
+func TestCompletion(t *testing.T) {
+	var out bytes.Buffer
+	if err := run(strings.NewReader(""), &out, []string{"-completion", "zsh"}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(out.String(), "#compdef qrcode") {
+		t.Errorf("zsh 補完スクリプトが出力されていない: %.40q", out.String())
+	}
+	if err := run(strings.NewReader(""), &out, []string{"-completion", "fish"}); err == nil {
+		t.Errorf("未対応のシェルでエラーにならない")
+	}
+}
